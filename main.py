@@ -32,7 +32,7 @@ def update_item(item_id: int, item: Item):
     return {"item_name": item.name, "item_id": item_id}
 
 @app.post("/chat")
-async def chat(chatRequest: ChatRequest):
+def chat(chatRequest: ChatRequest):
     # response = chat_with_gpt(text)
-    response = await invoke_chain(chatRequest.text)
+    response = invoke_chain(chatRequest.text)
     return {"response": response}

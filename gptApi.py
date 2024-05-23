@@ -7,6 +7,7 @@ from langchain.schema.runnable import RunnablePassthrough
 
 
 api_key = os.getenv("OPENAI_API_KEY")
+
 llm = ChatOpenAI(
     api_key = api_key,
     model = "gpt-3.5-turbo", # 3.5 빠름, 4.0 정확

@@ -3,7 +3,7 @@ from typing import Union
 from pydantic import BaseModel
 
 from gptApi import chat_with_gpt, invoke_chain
-from model.request import ChatRequest
+from model.request import ChatRequest, STTRequest
 
 app = FastAPI()
 
@@ -36,3 +36,7 @@ def chat(chatRequest: ChatRequest):
     # response = chat_with_gpt(text)
     response = invoke_chain(chatRequest.text)
     return {"response": response}
+
+@app.post("/stt")
+def stt(request: STTRequest):
+    return {"voiceFile": request.voiceFile}

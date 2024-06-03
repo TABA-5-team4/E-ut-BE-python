@@ -77,7 +77,7 @@ async def process_audio(file: UploadFile = File(...)):
 
     #get_audio_length
     audio = MP3("temp_audio.mp3")
-    length = datetime.timedelta(seconds=audio.info.length)
+    #audio_length = datetime.timedelta(seconds=audio.info.length)
 
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)

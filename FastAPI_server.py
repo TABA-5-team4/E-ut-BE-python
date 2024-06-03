@@ -7,7 +7,6 @@ from typing import List, Dict
 import openai
 import torch
 from transformers import pipeline
-import speech_recognition as sr
 from openai import OpenAI
 from mutagen.mp3 import MP3
 

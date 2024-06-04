@@ -53,7 +53,7 @@ prompt = """
 def get_gpt_response(text: str) -> str:
     response = client.chat.completions.create(
         # model="gpt-3.5-turbo", #
-        model="gpt-4o", #
+        model="gpt-4o", # 성능 넘사벽
         messages=[
             {"role": "system", "content": prompt},
             {"role": "user", "content": text}
@@ -113,7 +113,8 @@ class TextRequest(BaseModel):
     text: str
 @app.post("/chat")
 def chat(request: TextRequest):
-    response = get_gpt_response(request.text)
+    text = request.text + '와 관련된 안부를 물어봐줘'
+    response = get_gpt_response(text)
     return {"response": response}
 
 

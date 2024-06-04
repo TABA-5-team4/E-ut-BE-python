@@ -25,6 +25,8 @@ $ source venv/bin/activate
 $ pip install -r requirements.txt
 
 $ uvicorn main:app --reload
+
+kill -9 $(pgrep -f python)
 ```
 
 ### API KEY

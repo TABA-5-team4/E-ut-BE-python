@@ -11,9 +11,11 @@ $ git clone
 
 $ aws configure
 
-$ aws s3 cp s3://bucket_name/summarize_model /home/ec2-user/eut-app/E-ut-BE-python
+$ aws s3 cp s3://eut-s3-bucket/summarize_model /home/ec2-user/eut-app/E-ut-BE-python/summary_model --recursive
 
 $ ./python_deploy.sh
+
+
 ```
 
 ```angular2html

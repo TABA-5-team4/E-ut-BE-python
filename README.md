@@ -2,6 +2,22 @@
 
 ## Getting Started
 
+### ec2 배포
+
+```angular2html
+$ sudo yum install python3-pip
+
+$ git clone 
+
+$ aws configure
+
+$ aws s3 cp s3://eut-s3-bucket/summarize_model /home/ec2-user/eut-app/E-ut-BE-python/summary_model --recursive
+
+$ ./python_deploy.sh
+
+
+```
+
 ```angular2html
 $ python -m venv venv
 $ source venv/bin/activate
@@ -9,6 +25,8 @@ $ source venv/bin/activate
 $ pip install -r requirements.txt
 
 $ uvicorn main:app --reload
+
+kill -9 $(pgrep -f python)
 ```
 
 ### API KEY

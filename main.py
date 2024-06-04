@@ -113,7 +113,7 @@ class TextRequest(BaseModel):
     text: str
 @app.post("/chat")
 def chat(request: TextRequest):
-    text = request.text + '와 관련된 안부를 물어봐줘'
+    text = request.text + '와 관련된 안부를 물어봐주세요.'
     response = get_gpt_response(text)
     return {"response": response}
 

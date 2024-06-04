@@ -34,8 +34,10 @@ emotion_model = pipeline(
 )
 
 # Summarize model
-sm_tokenizer = PreTrainedTokenizerFast.from_pretrained('gogamza/kobart-summarization')
-sm_model = BartForConditionalGeneration.from_pretrained('gogamza/kobart-summarization')
+model_path = "C:/Users/Admin/Downloads/summary_model/saved_model"
+
+sm_model = BartForConditionalGeneration.from_pretrained(model_path)
+sm_tokenizer = PreTrainedTokenizerFast.from_pretrained(model_path)
 
 def get_summary(text):
     raw_input_ids = sm_tokenizer.encode(text)

@@ -34,7 +34,7 @@ emotion_model = pipeline(
 )
 
 # Summarize model
-model_path = "C:/Users/Admin/Downloads/summary_model/saved_model"
+model_path = "./summary_model"
 
 sm_model = BartForConditionalGeneration.from_pretrained(model_path)
 sm_tokenizer = PreTrainedTokenizerFast.from_pretrained(model_path)

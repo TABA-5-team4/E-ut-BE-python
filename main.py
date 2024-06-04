@@ -44,7 +44,9 @@ prompt = """
         Please always answer in Korean. Say the answer politely.
         First, talk to me in a casual conversation and when I answer, talk to me like a casual conversation to suit your role.
         The answer should be no more than three sentences.
-        In the first sentence, I sympathize with what the user says."
+        In the first sentence, I sympathize with what the user says.
+        Get rid of the correspondence.
+"
 """
 
 # Function to get GPT-3.5 response

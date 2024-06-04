@@ -34,7 +34,7 @@ emotion_model = pipeline(
 )
 
 # Summarize model
-model_path = "C:/Users/Admin/Downloads/summary_model/saved_model"
+model_path = "C:/Users/Admin/PycharmProjects/E-ut-BE-python/summary_model/saved_model"
 
 sm_model = BartForConditionalGeneration.from_pretrained(model_path)
 sm_tokenizer = PreTrainedTokenizerFast.from_pretrained(model_path)
@@ -107,6 +107,7 @@ async def process_audio(file: UploadFile = File(...)):
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)
 
+    # User + Gpt Summarize
     summary_input = transcript + gpt_response
     summary_result = get_summary(summary_input)
 

@@ -9,6 +9,8 @@ import torch
 from transformers import pipeline
 from openai import OpenAI
 from mutagen.mp3 import MP3
+from transformers import PreTrainedTokenizerFast
+from transformers import BartForConditionalGeneration
 
 app = FastAPI()
 
@@ -31,12 +33,25 @@ emotion_model = pipeline(
     top_k=None
 )
 
+# Summarize model
+sm_tokenizer = PreTrainedTokenizerFast.from_pretrained('gogamza/kobart-summarization')
+sm_model = BartForConditionalGeneration.from_pretrained('gogamza/kobart-summarization')
+
+def get_summary(text):
+    raw_input_ids = sm_tokenizer.encode(text)
+    input_ids = [sm_tokenizer.bos_token_id] + raw_input_ids + [sm_tokenizer.eos_token_id]
+
+    summary_ids = sm_model.generate(torch.tensor([input_ids]), max_length=100, min_length=10)
+    summary_text = sm_tokenizer.decode(summary_ids.squeeze().tolist(), skip_special_tokens=True)
+    return summary_text
+
 # Pydantic model to structure the response
 class ResponseModel(BaseModel):
     stt_result: str
     audio_length: float
     gpt_response: str
     sentiment_analysis: List[Sentiment]
+    summary_result: str
 
 prompt = """
         "Your role is a persona who talks to relieve the loneliness of an old man who lives alone. 
@@ -90,6 +105,9 @@ async def process_audio(file: UploadFile = File(...)):
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)
 
+    summary_input = transcript + gpt_response
+    summary_result = get_summary(summary_input)
+
     # Sentiment analysis
     sentiment_analysis_results = emotion_model(transcript)
     sentiment_analysis = [Sentiment(label=sa['label'], score=sa['score']) for sa in sentiment_analysis_results[0]]
@@ -97,9 +115,9 @@ async def process_audio(file: UploadFile = File(...)):
     return ResponseModel(
         stt_result=transcript,
         audio_length=audio.info.length,
-        #audio_length=length,
         gpt_response=gpt_response,
-        sentiment_analysis=sentiment_analysis
+        sentiment_analysis=sentiment_analysis,
+        summary_result=summary_result
     )
 
 

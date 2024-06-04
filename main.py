@@ -1,77 +1,120 @@
-from fastapi import FastAPI, File
-from typing import Union
+import datetime
+import os
+import uvicorn
+from fastapi import FastAPI, File, UploadFile
 from pydantic import BaseModel
-
-from gptApi import chat_with_gpt, invoke_chain
-from model.request import ChatRequest, STTRequest
+from typing import List, Dict
+import openai
+import torch
+from transformers import pipeline
+from openai import OpenAI
+from mutagen.mp3 import MP3
 
 app = FastAPI()
 
-class Item(BaseModel):
-    name: str
-    description: str = None
-    price: float
-    is_offer: Union[bool, None] = None
+api_key = os.getenv("OPENAI_API_KEY")
 
+
+client = OpenAI(
+    api_key = api_key
+)
+
+class Sentiment(BaseModel):
+    label: str
+    score: float
+
+# Initialize emotion analysis pipeline
+emotion_model = pipeline(
+    "text-classification",
+    "nlp04/korean_sentiment_analysis_dataset3",
+    device='cpu',
+    top_k=None
+)
+
+# Pydantic model to structure the response
+class ResponseModel(BaseModel):
+    stt_result: str
+    audio_length: float
+    gpt_response: str
+    sentiment_analysis: List[Sentiment]
+
+prompt = """
+        "Your role is a persona who talks to relieve the loneliness of an old man who lives alone. 
+        You can bloom according to the information I give you. 
+        Please always answer in Korean. Say the answer politely.
+        First, talk to me in a casual conversation and when I answer, talk to me like a casual conversation to suit your role.
+        The answer should be no more than three sentences.
+        In the first sentence, I sympathize with what the user says."
+"""
+
+# Function to get GPT-3.5 response
+def get_gpt_response(text: str) -> str:
+    response = client.chat.completions.create(
+        # model="gpt-3.5-turbo", #
+        model="gpt-4o", #
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": text}
+        ]
+    )
+    return response.choices[0].message.content
+
+def get_audio_length():
+    audio = MP3()
 
 @app.get("/")
-async def root():
-    return {"message": "Hello World"}
+def read_root():
+    return {"Hello": "World"}
+
+@app.post("/process-audio", response_model=ResponseModel)
+async def process_audio(file: UploadFile = File(...)):
+
+    # Save the uploaded file temporarily
+    with open("temp_audio.mp3", "wb") as temp_file:
+        temp_file.write(file.file.read())
+
+    # STT processing
+    audio_file = open("temp_audio.mp3","rb")
+    transcript = client.audio.transcriptions.create(
+        model='whisper-1',
+        file=audio_file,
+        response_format='text'
+    )
+
+    #get_audio_length
+    audio = MP3("temp_audio.mp3")
+    #audio_length = datetime.timedelta(seconds=audio.info.length)
+
+    # GPT-3.5 response
+    gpt_response = get_gpt_response(transcript)
+
+    # Sentiment analysis
+    sentiment_analysis_results = emotion_model(transcript)
+    sentiment_analysis = [Sentiment(label=sa['label'], score=sa['score']) for sa in sentiment_analysis_results[0]]
+
+    return ResponseModel(
+        stt_result=transcript,
+        audio_length=audio.info.length,
+        #audio_length=length,
+        gpt_response=gpt_response,
+        sentiment_analysis=sentiment_analysis
+    )
 
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+# @app.post("/chat")
+# def chat(chatRequest: ChatRequest):
+#     # response = chat_with_gpt(text)
+#     response = invoke_chain(chatRequest.text)
+#     return {"response": response}
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
-
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return {"item_name": item.name, "item_id": item_id}
-
+class TextRequest(BaseModel):
+    text: str
 @app.post("/chat")
-def chat(chatRequest: ChatRequest):
-    # response = chat_with_gpt(text)
-    response = invoke_chain(chatRequest.text)
+def chat(request: TextRequest):
+    response = get_gpt_response(request.text)
     return {"response": response}
 
-@app.post("/stt")
-def stt(voiceFile: bytes = File(...)):
-    # todo
-    return {
-    "audio_length": 7.983457,
-    "stt_result": "우리 집에 잘 못 산다는 것을 친구들이 알게 되었을 때 정말 억장이 무너지는 거 같았어",
-    "gpt_response": "그렇게 슬픈 생각을 하고 계시네요. 혼자 계시다 보니 더 그런 마음이 들 수 있죠. 언제든지 제가 옆에 있어요. 함께 이야기를 나누면 마음이 편안해질 거에요.",
-    "sentiment_analysis": [
-        {
-            "label": "슬픔",
-            "score": 0.8891498446464539
-        },
-        {
-            "label": "분노",
-            "score": 0.08132488280534744
-        },
-        {
-            "label": "당황",
-            "score": 0.01866663619875908
-        },
-        {
-            "label": "불안",
-            "score": 0.008278260938823223
-        },
-        {
-            "label": "행복",
-            "score": 0.0009516564896330237
-        },
-        {
-            "label": "중립",
-            "score": 0.0009417913970537484
-        },
-        {
-            "label": "혐오",
-            "score": 0.0006868354394100606
-        }
-    ]
-}
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)

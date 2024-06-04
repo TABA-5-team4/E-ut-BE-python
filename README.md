@@ -2,6 +2,20 @@
 
 ## Getting Started
 
+### ec2 배포
+
+```angular2html
+$ sudo yum install python3-pip
+
+$ git clone 
+
+$ aws configure
+
+$ aws s3 cp s3://bucket_name/summarize_model /home/ec2-user/eut-app/E-ut-BE-python
+
+$ ./python_deploy.sh
+```
+
 ```angular2html
 $ python -m venv venv
 $ source venv/bin/activate

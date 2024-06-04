@@ -107,6 +107,7 @@ async def process_audio(file: UploadFile = File(...)):
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)
 
+    # User + Gpt response -> summary
     summary_input = transcript + gpt_response
     summary_result = get_summary(summary_input)
 

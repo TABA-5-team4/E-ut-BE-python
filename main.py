@@ -2,6 +2,7 @@ import datetime
 import os
 import uvicorn
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from typing import List, Dict
 import openai
@@ -13,9 +14,10 @@ from transformers import PreTrainedTokenizerFast
 from transformers import BartForConditionalGeneration
 
 app = FastAPI()
+# 데이터 압축해서 전송
+app.add_middleware(GZipMiddleware, minimum_size = 500)
 
 api_key = os.getenv("OPENAI_API_KEY")
-
 
 client = OpenAI(
     api_key = api_key
@@ -34,10 +36,14 @@ emotion_model = pipeline(
 )
 
 # Summarize model
-model_path = "C:/Users/Admin/Downloads/summary_model/saved_model"
+model_path = "./summary_model"
 
 sm_model = BartForConditionalGeneration.from_pretrained(model_path)
 sm_tokenizer = PreTrainedTokenizerFast.from_pretrained(model_path)
+
+
+#sm_tokenizer = PreTrainedTokenizerFast.from_pretrained('gogamza/kobart-summarization')
+#sm_model = BartForConditionalGeneration.from_pretrained('gogamza/kobart-summarization')
 
 def get_summary(text):
     raw_input_ids = sm_tokenizer.encode(text)
@@ -52,7 +58,7 @@ class ResponseModel(BaseModel):
     stt_result: str
     audio_length: float
     gpt_response: str
-    sentiment_analysis: List[Sentiment]
+    sentiment_result: List[Sentiment]
     summary_result: str
 
 prompt = """
@@ -62,8 +68,7 @@ prompt = """
         First, talk to me in a casual conversation and when I answer, talk to me like a casual conversation to suit your role.
         The answer should be no more than three sentences.
         In the first sentence, I sympathize with what the user says.
-        Get rid of the correspondence.
-"
+        Get rid of the correspondence."
 """
 
 # Function to get GPT-3.5 response
@@ -77,9 +82,6 @@ def get_gpt_response(text: str) -> str:
         ]
     )
     return response.choices[0].message.content
-
-def get_audio_length():
-    audio = MP3()
 
 @app.get("/")
 def read_root():
@@ -100,7 +102,7 @@ async def process_audio(file: UploadFile = File(...)):
         response_format='text'
     )
 
-    #get_audio_length
+    # Get audio length
     audio = MP3("temp_audio.mp3")
     #audio_length = datetime.timedelta(seconds=audio.info.length)
 
@@ -119,16 +121,9 @@ async def process_audio(file: UploadFile = File(...)):
         stt_result=transcript,
         audio_length=audio.info.length,
         gpt_response=gpt_response,
-        sentiment_analysis=sentiment_analysis,
+        sentiment_result=sentiment_analysis,
         summary_result=summary_result
     )
-
-
-# @app.post("/chat")
-# def chat(chatRequest: ChatRequest):
-#     # response = chat_with_gpt(text)
-#     response = invoke_chain(chatRequest.text)
-#     return {"response": response}
 
 class TextRequest(BaseModel):
     text: str
@@ -137,8 +132,6 @@ def chat(request: TextRequest):
     text = request.text + '와 관련된 안부를 물어봐주세요.'
     response = get_gpt_response(text)
     return {"response": response}
-
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -1,4 +1,3 @@
-import datetime
 import os
 import uvicorn
 from fastapi import FastAPI, File, UploadFile
@@ -26,32 +25,6 @@ client = OpenAI(
 class Sentiment(BaseModel):
     label: str
     score: float
-
-# Initialize emotion analysis pipeline
-emotion_model = pipeline(
-    "text-classification",
-    "nlp04/korean_sentiment_analysis_dataset3",
-    device='cpu',
-    top_k=None
-)
-
-# Summarize model
-model_path = "./summary_model"
-
-sm_model = BartForConditionalGeneration.from_pretrained(model_path)
-sm_tokenizer = PreTrainedTokenizerFast.from_pretrained(model_path)
-
-
-#sm_tokenizer = PreTrainedTokenizerFast.from_pretrained('gogamza/kobart-summarization')
-#sm_model = BartForConditionalGeneration.from_pretrained('gogamza/kobart-summarization')
-
-def get_summary(text):
-    raw_input_ids = sm_tokenizer.encode(text)
-    input_ids = [sm_tokenizer.bos_token_id] + raw_input_ids + [sm_tokenizer.eos_token_id]
-
-    summary_ids = sm_model.generate(torch.tensor([input_ids]), max_length=100, min_length=10)
-    summary_text = sm_tokenizer.decode(summary_ids.squeeze().tolist(), skip_special_tokens=True)
-    return summary_text
 
 # Pydantic model to structure the response
 class ResponseModel(BaseModel):
@@ -83,6 +56,30 @@ def get_gpt_response(text: str) -> str:
     )
     return response.choices[0].message.content
 
+# Initialize emotion analysis pipeline
+emotion_model = pipeline(
+    "text-classification",
+    "nlp04/korean_sentiment_analysis_dataset3",
+    device='cpu',
+    top_k=None
+)
+
+# Summarize model
+model_path = "./summary_model"
+sm_model = BartForConditionalGeneration.from_pretrained(model_path)
+sm_tokenizer = PreTrainedTokenizerFast.from_pretrained(model_path)
+
+#sm_tokenizer = PreTrainedTokenizerFast.from_pretrained('gogamza/kobart-summarization')
+#sm_model = BartForConditionalGeneration.from_pretrained('gogamza/kobart-summarization')
+
+def get_summary(text):
+    raw_input_ids = sm_tokenizer.encode(text)
+    input_ids = [sm_tokenizer.bos_token_id] + raw_input_ids + [sm_tokenizer.eos_token_id]
+
+    summary_ids = sm_model.generate(torch.tensor([input_ids]), max_length=100, min_length=10)
+    summary_text = sm_tokenizer.decode(summary_ids.squeeze().tolist(), skip_special_tokens=True)
+    return summary_text
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -104,7 +101,6 @@ async def process_audio(file: UploadFile = File(...)):
 
     # Get audio length
     audio = MP3("temp_audio.mp3")
-    #audio_length = datetime.timedelta(seconds=audio.info.length)
 
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)
@@ -127,6 +123,7 @@ async def process_audio(file: UploadFile = File(...)):
 
 class TextRequest(BaseModel):
     text: str
+
 @app.post("/chat")
 def chat(request: TextRequest):
     text = request.text + '와 관련된 안부를 물어봐주세요.'

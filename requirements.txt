@@ -9,3 +9,5 @@ mutagen==1.47.0
 python-multipart==0.0.9
 numpy == 1.23.1
 pydantic == 2.7.2
+sentencepiece == 0.2.0
+huggingface == 0.0.1

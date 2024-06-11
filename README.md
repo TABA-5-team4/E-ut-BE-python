@@ -13,6 +13,8 @@ $ aws configure
 
 $ aws s3 cp s3://eut-s3-bucket/summarize_model /home/ec2-user/eut-app/E-ut-BE-python/summary_model --recursive
 
+$ aws s3 cp s3://eut-s3-bucket/sentiment_analysis.pt /home/ec2-user/eut-app/E-ut-BE-python
+
 $ ./python_deploy.sh
 
 

@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from typing import List
 from openai import OpenAI
 from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
 from transformers import PreTrainedTokenizerFast
 from transformers import BartForConditionalGeneration
 from transformers import AutoTokenizer, AutoModel
@@ -156,11 +157,11 @@ def read_root():
 async def process_audio(file: UploadFile = File(...)):
 
     # Save the uploaded file temporarily
-    with open("temp_audio.mp3", "wb") as temp_file:
+    with open("temp_audio.mp4", "wb") as temp_file:
         temp_file.write(file.file.read())
 
     # STT processing
-    audio_file = open("temp_audio.mp3","rb")
+    audio_file = open("temp_audio.mp4","rb")
     transcript = client.audio.transcriptions.create(
         model='whisper-1',
         file=audio_file,
@@ -168,7 +169,7 @@ async def process_audio(file: UploadFile = File(...)):
     )
 
     # Get audio length
-    audio = MP3("temp_audio.mp3")
+    audio = MP4("temp_audio.mp4")
 
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)

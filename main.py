@@ -35,7 +35,7 @@ class ResponseModel(BaseModel):
     stt_result: str
     audio_length: float
     gpt_response: str
-    sentiment_result: List[Sentiment]
+    sentiment_analysis: List[Sentiment]
     summary_result: str
 
 prompt = """
@@ -186,7 +186,7 @@ async def process_audio(file: UploadFile = File(...)):
         stt_result=transcript,
         audio_length=audio.info.length,
         gpt_response=gpt_response,
-        sentiment_result=sentiment_analysis,
+        sentiment_analysis=sentiment_analysis,
         summary_result=summary_result
     )
 

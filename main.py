@@ -182,6 +182,8 @@ async def process_audio(file: UploadFile = File(...)):
     sentiment_analysis_results = predict(transcript)
     sentiment_analysis = [Sentiment(label=sa['label'], score=sa['score']) for sa in sentiment_analysis_results]
 
+    print(audio.info.length)
+
     return ResponseModel(
         stt_result=transcript,
         audio_length=audio.info.length,

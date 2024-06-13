@@ -170,19 +170,7 @@ async def process_audio(file: UploadFile = File(...)):
     )
 
     # Get audio length
-    #audio = MP4("temp_audio.mp4")
-    # Get audio length
-    video = VideoFileClip("temp_audio.mp4")
-
-    # Extract audio from the video and save it to a temporary MP3 file
-    temp_audio_file = "temp_audio.mp3"
-    video.audio.write_audiofile(temp_audio_file, codec='mp3')
-
-    # Load the extracted audio file using Mutagen
-    audio = MP3(temp_audio_file)
-
-    # Get the duration of the audio in seconds
-    audio_duration = audio.info.length
+    audio = MP4("temp_audio.mp4")
 
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)

@@ -15,7 +15,6 @@ from transformers import PreTrainedTokenizerFast
 from transformers import BartForConditionalGeneration
 from transformers import AutoTokenizer, AutoModel
 from torch.utils.data import Dataset, DataLoader
-from moviepy.editor import VideoFileClip
 
 app = FastAPI()
 # 데이터 압축해서 전송
@@ -156,12 +155,10 @@ def read_root():
 
 @app.post("/process-audio", response_model=ResponseModel)
 async def process_audio(file: UploadFile = File(...)):
-    temp_video_path = "temp_video.mp4"
-    temp_audio_path = "temp_audio.mp3"
 
     # Save the uploaded file temporarily
-    with open(temp_video_path, "wb") as temp_file:
-        temp_file.write(await file.read())
+    with open("temp_audio.mp4", "wb") as temp_file:
+        temp_file.write(file.file.read())
 
     # STT processing
     audio_file = open("temp_audio.mp4","rb")
@@ -172,10 +169,7 @@ async def process_audio(file: UploadFile = File(...)):
     )
 
     # Get audio length
-    video = VideoFileClip(temp_video_path)
-    video.audio.write_audiofile(temp_audio_path, codec='mp3')
-
-    audio = MP3(temp_audio_path)
+    audio = MP4("temp_audio.mp4")
 
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)
@@ -188,7 +182,7 @@ async def process_audio(file: UploadFile = File(...)):
     sentiment_analysis_results = predict(transcript)
     sentiment_analysis = [Sentiment(label=sa['label'], score=sa['score']) for sa in sentiment_analysis_results]
 
-    #print(audio.info.length)
+    print(audio.info.length)
 
     return ResponseModel(
         stt_result=transcript,

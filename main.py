@@ -169,7 +169,7 @@ async def process_audio(file: UploadFile = File(...)):
     )
 
     # Get audio length
-    audio = MP4("temp_audio.mp4")
+    audio = MP3("temp_audio.mp4")
 
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)

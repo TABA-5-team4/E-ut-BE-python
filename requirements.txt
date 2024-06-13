@@ -11,3 +11,4 @@ numpy == 1.23.1
 pydantic == 2.7.2
 sentencepiece == 0.2.0
 huggingface == 0.0.1
+protobuf == 5.27.1

@@ -15,6 +15,7 @@ from transformers import PreTrainedTokenizerFast
 from transformers import BartForConditionalGeneration
 from transformers import AutoTokenizer, AutoModel
 from torch.utils.data import Dataset, DataLoader
+from moviepy.editor import VideoFileClip
 
 app = FastAPI()
 # 데이터 압축해서 전송
@@ -169,7 +170,19 @@ async def process_audio(file: UploadFile = File(...)):
     )
 
     # Get audio length
-    audio = MP4("temp_audio.mp4")
+    #audio = MP4("temp_audio.mp4")
+    # Get audio length
+    video = VideoFileClip("temp_audio.mp4")
+
+    # Extract audio from the video and save it to a temporary MP3 file
+    temp_audio_file = "temp_audio.mp3"
+    video.audio.write_audiofile(temp_audio_file, codec='mp3')
+
+    # Load the extracted audio file using Mutagen
+    audio = MP3(temp_audio_file)
+
+    # Get the duration of the audio in seconds
+    audio_duration = audio.info.length
 
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)
@@ -186,7 +199,7 @@ async def process_audio(file: UploadFile = File(...)):
 
     return ResponseModel(
         stt_result=transcript,
-        audio_length=audio.info.length,
+        audio_length=audio_duration,
         gpt_response=gpt_response,
         sentiment_analysis=sentiment_analysis,
         summary_result=summary_result

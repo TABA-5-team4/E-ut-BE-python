@@ -34,7 +34,7 @@ class Sentiment(BaseModel):
 # Pydantic model to structure the response
 class ResponseModel(BaseModel):
     stt_result: str
-    audio_length: float
+    audio_length: int
     gpt_response: str
     sentiment_analysis: List[Sentiment]
     summary_result: str

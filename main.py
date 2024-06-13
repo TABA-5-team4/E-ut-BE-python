@@ -170,14 +170,15 @@ async def process_audio(file: UploadFile = File(...)):
     )
 
     # Get audio length
-    audio_duration = random.randint(1,60)
+    audio_duration = random.randint(1,30)
 
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)
 
     # User + Gpt response -> summary
-    summary_input = transcript + gpt_response
-    summary_result = get_summary(summary_input)
+    user_summary = get_summary(transcript)
+    response_summary = get_summary(gpt_response)
+    summary_result = user_summary + response_summary
 
     # Sentiment analysis
     sentiment_analysis_results = predict(transcript)

@@ -4,6 +4,7 @@ import uvicorn
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import random
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ from transformers import PreTrainedTokenizerFast
 from transformers import BartForConditionalGeneration
 from transformers import AutoTokenizer, AutoModel
 from torch.utils.data import Dataset, DataLoader
-import random
+from transformers import pipeline
 
 app = FastAPI()
 # 데이터 압축해서 전송
@@ -129,6 +130,13 @@ def predict(predict_sentence):
             results = [{"label": label, "score": float(score)} for label, score in zip(sorted_labels, sorted_probabilities)]
             return results
 
+emotion_model = pipeline(
+    "text-classification",
+    "nlp04/korean_sentiment_analysis_dataset3",
+    #device='cpu',
+    top_k=None
+)
+
 # Load model and tokenizer
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 tokenizer = AutoTokenizer.from_pretrained('skt/kobert-base-v1')
@@ -182,8 +190,8 @@ async def process_audio(file: UploadFile = File(...)):
     summary_result = get_summary(summary_input)
 
     # Sentiment analysis
-    sentiment_analysis_results = predict(transcript)
-    sentiment_analysis = [Sentiment(label=sa['label'], score=sa['score']) for sa in sentiment_analysis_results]
+    sentiment_analysis_results = emotion_model(transcript)
+    sentiment_analysis = [Sentiment(label=sa['label'], score=sa['score']) for sa in sentiment_analysis_results[0]]
 
 
     return ResponseModel(

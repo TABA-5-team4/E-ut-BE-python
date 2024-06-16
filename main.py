@@ -1,4 +1,5 @@
 import os
+import json
 import numpy as np
 import uvicorn
 import torch
@@ -8,15 +9,14 @@ import random
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
-from typing import List
 from openai import OpenAI
-from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from transformers import PreTrainedTokenizerFast
 from transformers import BartForConditionalGeneration
 from transformers import AutoTokenizer, AutoModel
 from torch.utils.data import Dataset, DataLoader
 from transformers import pipeline
+from typing import List, Tuple, Optional
 
 app = FastAPI()
 # 데이터 압축해서 전송
@@ -38,7 +38,7 @@ class ResponseModel(BaseModel):
     audio_length: int
     gpt_response: str
     sentiment_analysis: List[Sentiment]
-    summary_result: str
+    summary_result: Optional[str] = None
 
 prompt = """
         "Your role is a persona who talks to relieve the loneliness of an old man who lives alone. 
@@ -133,7 +133,6 @@ def predict(predict_sentence):
 emotion_model = pipeline(
     "text-classification",
     "nlp04/korean_sentiment_analysis_dataset3",
-    #device='cpu',
     top_k=None
 )
 
@@ -160,6 +159,18 @@ def get_summary(text):
     summary_text = sm_tokenizer.decode(summary_ids.squeeze().tolist(), skip_special_tokens=True)
     return summary_text
 
+def load_conversation_history(file_path: str) -> List[Tuple[str, str]]:
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+def save_conversation_history(file_path: str, history: List[Tuple[str, str]]):
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(history, f, ensure_ascii=False, indent=4)
+
+conversation_history: List[Tuple[str, str]] = load_conversation_history("conversation_history.json")
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -185,13 +196,21 @@ async def process_audio(file: UploadFile = File(...)):
     # GPT-3.5 response
     gpt_response = get_gpt_response(transcript)
 
-    # User + Gpt response -> summary
-    summary_input = transcript + gpt_response
-    summary_result = get_summary(summary_input)
+    # Add to conversation history
+    conversation_history.append((transcript, gpt_response))
+    save_conversation_history("conversation_history.json", conversation_history)
 
     # Sentiment analysis
     sentiment_analysis_results = emotion_model(transcript)
     sentiment_analysis = [Sentiment(label=sa['label'], score=sa['score']) for sa in sentiment_analysis_results[0]]
+
+    # Summarize the last 5 conversations if applicable
+    summary_of_last_5 = None
+    if len(conversation_history) >= 5:
+        last_5_conversations = " ".join([f"부모님: {conv[0]} 응답: {conv[1]}" for conv in conversation_history[-5:]])
+        summary_of_last_5 = get_summary(last_5_conversations)
+        conversation_history.clear()
+        save_conversation_history("conversation_history.json", conversation_history)
 
 
     return ResponseModel(
@@ -199,7 +218,7 @@ async def process_audio(file: UploadFile = File(...)):
         audio_length=audio_duration,
         gpt_response=gpt_response,
         sentiment_analysis=sentiment_analysis,
-        summary_result=summary_result
+        summary_result=summary_of_last_5
     )
 
 class TextRequest(BaseModel):

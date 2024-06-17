@@ -205,20 +205,22 @@ async def process_audio(file: UploadFile = File(...)):
     sentiment_analysis = [Sentiment(label=sa['label'], score=sa['score']) for sa in sentiment_analysis_results[0]]
 
     # Summarize the last 5 conversations if applicable
-    summary_of_last_5 = None
+    summary_result = None
     if len(conversation_history) >= 5:
-        last_5_conversations = " ".join([f"부모님: {conv[0]} 응답: {conv[1]}" for conv in conversation_history[-5:]])
-        summary_of_last_5 = get_summary(last_5_conversations)
+        last_5_user_responses = " ".join([conv[0] for conv in conversation_history[-5:]])
+        last_5_gpt_responses = " ".join([conv[1] for conv in conversation_history[-5:]])
+        user_summary = get_summary(last_5_user_responses)
+        gpt_summary = get_summary(last_5_gpt_responses)
+        summary_result = f"부모님: {user_summary} 응답: {gpt_summary}"
         conversation_history.clear()
         save_conversation_history("conversation_history.json", conversation_history)
-
 
     return ResponseModel(
         stt_result=transcript,
         audio_length=audio_duration,
         gpt_response=gpt_response,
         sentiment_analysis=sentiment_analysis,
-        summary_result=summary_of_last_5
+        summary_result=summary_result
     )
 
 class TextRequest(BaseModel):

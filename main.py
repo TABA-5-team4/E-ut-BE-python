@@ -155,7 +155,7 @@ def get_summary(text):
     raw_input_ids = sm_tokenizer.encode(text)
     input_ids = [sm_tokenizer.bos_token_id] + raw_input_ids + [sm_tokenizer.eos_token_id]
 
-    summary_ids = sm_model.generate(torch.tensor([input_ids]), max_length=500, min_length=20)
+    summary_ids = sm_model.generate(torch.tensor([input_ids]), max_length=300, min_length=20)
     summary_text = sm_tokenizer.decode(summary_ids.squeeze().tolist(), skip_special_tokens=True)
     return summary_text
 

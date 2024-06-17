@@ -207,9 +207,9 @@ async def process_audio(file: UploadFile = File(...)):
     # Summarize the last 5 conversations if applicable
     summary_result = None
     if len(conversation_history) >= 5:
-        last_5_user_responses = " ".join([conv[0] for conv in conversation_history[-5:]])
+        last_5_user_responses = ". ".join([conv[0] for conv in conversation_history[-5:]])
         user_summary = get_summary(last_5_user_responses)
-        summary_result = f"부모님: {user_summary}"
+        summary_result = f"부모님: {user_summary}."
         conversation_history.clear()
         save_conversation_history("conversation_history.json", conversation_history)
 
